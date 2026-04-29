@@ -24,7 +24,7 @@ app.post("/api/chat", async (req, res) => {
     }
 
     const response = await client.responses.create({
-      model: "gpt-5.5",
+      model: "gpt-4.0",
       input: [
         {
           role: "system",
