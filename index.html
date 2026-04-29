@@ -145,28 +145,16 @@
       </div>
 
       <div class="card card-pad">
-        <p><strong>How to use this page</strong></p>
-        <p class="sub">
-          1. Edit any cell in the table. 
-          2. Describe what the music did to you in the chat. 
-          3. Satan turns that description into language you can paste back into the table. 
-          4. Export CSV or print when you want a record.
-        </p>
-
-        <p style="margin-top: 1rem;"><strong>What Satan does</strong></p>
-        <p class="sub">
-          The Satan chatbot works as an <em>experience translator</em>. 
-          You write what happened to you with the music – sensations, images, after‑effects – and it suggests:
-        </p>
-        <ul class="sub" style="margin-top: .5rem; padding-left: 1.2rem;">
-          <li>words for the emotional tone,</li>
-          <li>body cues and somatic signals,</li>
-          <li>likely levels from the table that fit this state.</li>
-        </ul>
-        <p class="sub" style="margin-top: .75rem;">
-          You stay in control: treat its reply as raw material, then edit, cut, or ignore as needed.
-        </p>
-      </div>
+        <p><strong>How to use it</strong></p>
+        
+        <p class="sub">1. Edit any cell. 2. Use the chat to describe what the music did to you. 3. The Satan (local) suggests vocabulary, body cues, after-effects, and likely levels. 4. Below you can find your Satan helper (powered by OpenAI). 5. Export CSV or print when done.</p>
+      
+	  <p><strong>About Satan chatbot</strong></p>
+	  <p class="sub2">You can use the Satan chatbot as a focused “experience translator”: write what happened to you with the music, and let it suggest language, body cues, and likely levels that you can then copy into the table.  </p>
+      
+	  
+	  
+	  </div>
     </section>
 
     <section class="workspace">
@@ -207,68 +195,37 @@
         <section class="card chat-shell" aria-label="Satan chat panel">
           <div class="chat-head">
             <div>
-              <p class="status">
-                <span class="status-dot"></span>
-                <span id="modeLabel">Satan · local translator</span>
-              </p>
-              <h2 style="font-family:var(--font-display);font-size:var(--text-lg);line-height:1.1">
-                Satan – experience translator
-              </h2>
+              <p class="status"><span class="status-dot"></span><span id="modeLabel">Satan</span></p>
+              <h2 style="font-family:var(--font-display);font-size:var(--text-lg);line-height:1.1">Satan</h2>
             </div>
-            <button class="btn" type="button" id="clearChatBtn">clear chat</button>
+            <button class="btn" type="button" id="clearChatBtn">clear</button>
           </div>
-          <p class="chat-meta">
-            Write what the track did to you – sensations, images, or shifts afterwards – not just its genre. 
-            Satan will suggest language and one or two candidate levels from the table.
-          </p>
+          <p class="chat-meta">Describe what the music did to you, not what genre it was. Satan will turn it into usable language and point you toward one or two possible levels.</p>
           <div class="quick-actions">
-            <button class="quick-btn" type="button">
-              The track sat like pressure in my chest and I could not explain why.
-            </button>
-            <button class="quick-btn" type="button">
-              While listening I saw roads, weather, and old rooms, as if it were a private film.
-            </button>
-            <button class="quick-btn" type="button">
-              It felt like the music was more me than I was, and that was uncomfortable.
-            </button>
+            <button class="quick-btn" type="button">It felt like pressure in my chest and I could not explain why.</button>
+            <button class="quick-btn" type="button">I saw roads, weather, and old rooms while listening.</button>
+            <button class="quick-btn" type="button">It felt like the music was more me than I was.</button>
           </div>
           <div class="chat-log" id="chatLog" aria-live="polite"></div>
           <form class="chat-form" id="chatForm">
-            <textarea
-              class="chat-input"
-              id="chatInput"
-              placeholder="Example: Halfway through the track my throat tightened and my vision narrowed. It felt exposing but I did not want to stop listening."
-            ></textarea>
+            <textarea class="chat-input" id="chatInput" placeholder="Example: The track made my throat tighten and I felt exposed, but I still wanted to stay inside it."></textarea>
             <div class="chat-actions">
-              <button class="btn btn-primary" type="submit">translate this experience</button>
-              <button class="btn" type="button" id="copyReplyBtn">copy translation</button>
-              <button class="btn" type="button" id="insertReplyBtn">paste into notes cell</button>
+              <button class="btn btn-primary" type="submit">ask Satan</button>
+              <button class="btn" type="button" id="copyReplyBtn">copy last reply</button>
+              <button class="btn" type="button" id="insertReplyBtn">insert into notes cell</button>
             </div>
           </form>
           <div class="config-grid">
             <div>
-              <label for="apiEndpoint">optional online engine</label>
-              <input
-                class="config-input"
-                id="apiEndpoint"
-                type="url"
-                placeholder="Add a chat API URL here to use an external model"
-              >
+              <label for="apiEndpoint">optional api endpoint</label>
+              <input class="config-input" id="apiEndpoint" type="url" placeholder="https://panathema666musicl.onrender.com/chat">
             </div>
             <div>
-              <label for="apiModeToggle">how replies are chosen</label>
-              <input
-                class="config-input"
-                id="apiModeToggle"
-                type="text"
-                value="auto: use online engine if available, otherwise use local Satan"
-                readonly
-              >
+              <label for="apiModeToggle">response engine</label>
+              <input class="config-input" id="apiModeToggle" type="text" value="auto: local fallback, external if endpoint responds" readonly>
             </div>
           </div>
-          <p class="chat-note">
-            If the online engine is missing or fails, Satan (local) still gives you suggestions based on your text.
-          </p>
+          <p class="chat-note">If the Devil is empty or fails, the Satan (local) still works.</p>
         </section>
       </aside>
     </section>
@@ -461,10 +418,10 @@
           const data = await response.json();
           const reply = data.reply || data.message || data.output || data.text || (Array.isArray(data.choices) && data.choices[0] && data.choices[0].message && data.choices[0].message.content);
           if (!reply) throw new Error('No reply field in JSON');
-          modeLabel.textContent = 'Satan · online engine';
+          modeLabel.textContent = 'Satan · API connected';
           return String(reply);
         } catch (error) {
-          modeLabel.textContent = 'Satan · local translator';
+          modeLabel.textContent = 'Satan · local fallback';
           return null;
         }
       }
@@ -520,21 +477,17 @@
         if (!text) return;
         addMessage('user', text, 'you');
         chatInput.value = '';
-        addMessage('agent', 'Satan is reading your description and assembling a translation…', 'agent');
+        addMessage('agent', 'Satan is thinking through the state…', 'agent');
         const pending = chatLog.lastElementChild;
         const external = await askExternalAgent(text);
         const reply = external || localAgentReply(text);
-        pending.innerHTML = `<small>${external ? 'Satan via online engine' : 'Satan (local translator)'}</small>${reply.replace(/\n/g,'<br>')}`;
+        pending.innerHTML = `<small>${external ? 'Satan via API' : 'Satan (local)'}</small>${reply.replace(/\n/g,'<br>')}`;
         lastReply = reply;
       });
 
       applyTheme(root.getAttribute('data-theme') || 'dark');
       syncName();
-      addMessage(
-        'agent',
-        'Describe what the music did to you. Satan will propose emotional words, body cues, after-effects, and one or two levels that seem to fit.',
-        'agent'
-      );
+      addMessage('agent','Describe a track, passage, or state. Satan will suggest vocabulary, body cues, after-effects, and likely levels from the table.','agent');
     });
   </script>
 </body>
