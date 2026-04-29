@@ -1,1 +1,494 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>panathema music levels hybrid chat tool 290426</title>
+  <meta name="description" content="An editable music-level matrix with a hybrid chatbot: local fallback now, API-ready later." />
+  <link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=boska@400,500,700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="light"]{
+      --text-xs:clamp(.75rem,.7rem + .25vw,.875rem);
+      --text-sm:clamp(.875rem,.8rem + .35vw,1rem);
+      --text-base:clamp(1rem,.95rem + .25vw,1.05rem);
+      --text-lg:clamp(1.125rem,1rem + .75vw,1.35rem);
+      --text-xl:clamp(1.5rem,1.2rem + 1.25vw,2.1rem);
+      --space-2:.5rem;--space-3:.75rem;--space-4:1rem;--space-6:1.5rem;--space-8:2rem;
+      --bg:#f6f3ee;--surface:#fbf9f5;--surface-2:#f2eee8;--border:#d5cfc6;--divider:#e3ddd4;
+      --text:#231f1b;--muted:#706a63;--primary:#345e68;--primary-2:#7f5f4b;--inverse:#f9f8f4;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.05);--shadow-md:0 10px 30px rgba(0,0,0,.08);
+      --radius-md:.75rem;--radius-lg:1rem;--font-display:'Boska',Georgia,serif;--font-body:'Satoshi',Inter,sans-serif;
+    }
+    [data-theme="dark"]{
+      --bg:#121313;--surface:#1a1c1c;--surface-2:#222626;--border:#343938;--divider:#2b2f2f;
+      --text:#ddd8d0;--muted:#9a948a;--primary:#7da0a9;--primary-2:#a08472;--inverse:#101111;
+      --shadow-sm:0 1px 2px rgba(0,0,0,.25);--shadow-md:0 14px 40px rgba(0,0,0,.35);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    html{-webkit-font-smoothing:antialiased;scroll-behavior:smooth}
+    body{min-height:100dvh;background:var(--bg);color:var(--text);font:var(--text-base)/1.55 var(--font-body)}
+    button,input,select,textarea{font:inherit;color:inherit}
+    button{cursor:pointer;border:none;background:none}
+    .shell{max-width:1540px;margin:0 auto;padding:var(--space-4)}
+    .header{position:sticky;top:0;z-index:20;background:color-mix(in oklab,var(--bg) 88%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--divider)}
+    .header-inner{max-width:1540px;margin:0 auto;padding:var(--space-4);display:flex;justify-content:space-between;align-items:center;gap:var(--space-4);flex-wrap:wrap}
+    .brand{display:flex;align-items:center;gap:var(--space-3)}
+    .logo{width:36px;height:36px;color:var(--primary)}
+    h1{font-family:var(--font-display);font-size:var(--text-xl);line-height:1.02}
+    .sub{font-size:var(--text-sm);color:var(--muted)}
+    .controls{display:flex;gap:var(--space-2);flex-wrap:wrap;align-items:center}
+    .name-box,.btn,.config-input{border:1px solid var(--border);background:var(--surface);box-shadow:var(--shadow-sm);border-radius:999px}
+    .name-box{display:flex;gap:var(--space-2);align-items:center;padding:.78rem 1rem}
+    .name-box input{border:none;background:transparent;outline:none;min-width:12rem}
+    .btn,.config-input{padding:.78rem 1rem}
+    .btn:hover{background:var(--surface-2)}
+    .btn-primary{background:var(--primary);border-color:transparent;color:var(--inverse)}
+    .btn-primary:hover{background:color-mix(in oklab,var(--primary) 86%,black 14%)}
+    .theme-toggle[aria-pressed="true"]{background:color-mix(in oklab,var(--primary) 18%,var(--surface));border-color:color-mix(in oklab,var(--primary) 45%,var(--border))}
+    .intro{display:grid;grid-template-columns:1.15fr .85fr;gap:var(--space-4);padding:var(--space-6) 0}
+    .card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:var(--shadow-sm)}
+    .card-pad{padding:var(--space-6)}
+    .purpose{margin-top:var(--space-4);padding:1rem 1.1rem;border-left:3px solid var(--primary);background:color-mix(in oklab,var(--primary) 8%,var(--surface));border-radius:var(--radius-md)}
+    .legend{display:grid;grid-template-columns:repeat(4,1fr);gap:var(--space-3);margin-top:var(--space-4)}
+    .chip{padding:.8rem .9rem;border-radius:var(--radius-md);background:var(--surface-2);border:1px solid var(--border);font-size:var(--text-sm)}
+    .workspace{display:grid;grid-template-columns:minmax(0,1.65fr) minmax(320px,.95fr);gap:var(--space-4);align-items:start}
+    .table-tools{display:flex;justify-content:space-between;align-items:center;gap:var(--space-3);margin:0 0 var(--space-3) 0;flex-wrap:wrap}
+    .table-meta{font-size:var(--text-sm);color:var(--muted)}
+    .table-slider-wrap{padding:.75rem 1rem;border-radius:999px;background:var(--surface)}
+    .table-slider-inner{display:flex;align-items:center;gap:var(--space-3);min-width:min(100%,460px)}
+    .table-slider{width:min(100%,340px);accent-color:var(--primary)}
+    .table-wrap{overflow:auto;border:1px solid var(--border);border-radius:20px;background:var(--surface);box-shadow:var(--shadow-md)}
+    table{border-collapse:separate;border-spacing:0;width:max-content;min-width:100%}
+    thead th{position:sticky;top:0;z-index:3;background:var(--surface-2);font-size:var(--text-xs);letter-spacing:.04em;text-transform:uppercase;color:var(--muted)}
+    th,td{padding:.82rem .85rem;text-align:left;vertical-align:top;border-bottom:1px solid var(--divider);min-width:150px}
+    th:first-child,td:first-child{position:sticky;left:0;z-index:2;background:var(--surface);min-width:76px}
+    thead th:first-child{z-index:4;background:var(--surface-2)}
+    tbody th{font-size:var(--text-sm);color:var(--primary)}
+    tbody tr:nth-child(even) td,tbody tr:nth-child(even) th{background:color-mix(in oklab,var(--surface) 78%,var(--surface-2))}
+    tbody tr:hover td,tbody tr:hover th{background:color-mix(in oklab,var(--primary) 7%,var(--surface))}
+    td[contenteditable="true"]{outline:none;min-width:170px;line-height:1.45}
+    td[contenteditable="true"]:focus{background:color-mix(in oklab,var(--primary) 10%,var(--surface));box-shadow:inset 0 0 0 2px var(--primary)}
+    .col-meaning{min-width:260px}.col-example{min-width:280px}.col-context{min-width:220px}.col-notes{min-width:240px}
+    .genre-select{width:100%;min-width:185px;padding:.68rem .78rem;border-radius:.7rem;border:1px solid var(--border);background:var(--surface-2)}
+    .genre-select:focus,.btn:focus-visible,.name-box input:focus-visible,.config-input:focus-visible,.chat-input:focus-visible{outline:2px solid var(--primary);outline-offset:2px}
+    .chat-panel{position:sticky;top:98px;display:flex;flex-direction:column;gap:var(--space-3)}
+    .chat-shell{display:flex;flex-direction:column;min-height:680px;max-height:calc(100dvh - 126px);overflow:hidden}
+    .chat-head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--space-3);padding:var(--space-4) var(--space-4) 0}
+    .status{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.06em;color:var(--muted)}
+    .status-dot{display:inline-block;width:.6rem;height:.6rem;border-radius:999px;background:var(--primary);margin-right:.4rem;vertical-align:middle}
+    .chat-meta{padding:0 var(--space-4);font-size:var(--text-sm);color:var(--muted)}
+    .chat-log{padding:var(--space-4);display:flex;flex-direction:column;gap:var(--space-3);overflow:auto;min-height:280px}
+    .bubble{padding:.9rem 1rem;border-radius:1rem;max-width:100%;box-shadow:var(--shadow-sm);border:1px solid var(--border)}
+    .bubble-user{background:color-mix(in oklab,var(--primary) 14%,var(--surface));margin-left:auto}
+    .bubble-agent{background:var(--surface-2)}
+    .bubble small{display:block;color:var(--muted);margin-bottom:.35rem}
+    .quick-actions{display:flex;flex-wrap:wrap;gap:var(--space-2);padding:0 var(--space-4) var(--space-3)}
+    .quick-btn{padding:.6rem .8rem;border:1px solid var(--border);border-radius:999px;background:var(--surface-2);font-size:var(--text-sm)}
+    .quick-btn:hover{background:color-mix(in oklab,var(--primary) 9%,var(--surface-2))}
+    .chat-form{padding:var(--space-4);border-top:1px solid var(--divider);display:grid;gap:var(--space-3);background:color-mix(in oklab,var(--surface) 92%,transparent)}
+    .chat-input{width:100%;min-height:102px;resize:vertical;padding:1rem;border-radius:1rem;border:1px solid var(--border);background:var(--surface-2)}
+    .chat-actions{display:flex;gap:var(--space-2);flex-wrap:wrap}
+    .config-grid{display:grid;gap:var(--space-2);padding:var(--space-4);border-top:1px solid var(--divider)}
+    .config-grid label{font-size:var(--text-xs);text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+    .config-input{width:100%;border-radius:.9rem;padding:.8rem .9rem}
+    .chat-note{padding:0 var(--space-4) var(--space-4);font-size:var(--text-sm);color:var(--muted)}
+    .footer-note{padding:var(--space-4) 0;color:var(--muted);font-size:var(--text-sm)}
+    .print-name{display:none}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+    @media (max-width:1180px){.workspace{grid-template-columns:1fr}.chat-panel{position:static}.chat-shell{max-height:none;min-height:540px}.legend{grid-template-columns:1fr 1fr}}
+    @media (max-width:980px){.intro{grid-template-columns:1fr}.legend{grid-template-columns:1fr 1fr}.name-box{width:100%}}
+    @media (max-width:640px){.legend{grid-template-columns:1fr}.chat-actions .btn{flex:1 1 auto;width:100%}}
+    @media print{.header,.intro,.table-tools,.footer-note,.chat-panel{display:none !important}body{background:#fff;color:#000}.shell{max-width:none;padding:0}.table-wrap{border:none;box-shadow:none}.print-name{display:block;font-family:var(--font-display);font-size:24pt;margin:0 0 12pt 0}thead th,th:first-child,td:first-child{position:static;background:#fff !important;color:#000}}
+  </style>
+</head>
+<body>
+  <header class="header">
+    <div class="header-inner">
+      <div class="brand">
+        <svg class="logo" viewBox="0 0 64 64" fill="none" aria-label="panathema logo">
+          <circle cx="32" cy="32" r="24" stroke="currentColor" stroke-width="3"></circle>
+          <path d="M18 35c8-10 20-10 28 0" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+          <path d="M22 24h20" stroke="currentColor" stroke-width="3" stroke-linecap="round"></path>
+        </svg>
+        <div>
+          <h1>panathema music levels hybrid tool</h1>
+          <div class="sub">editable matrix + visible Satan panel for translating difficult listening states into language</div>
+        </div>
+      </div>
+      <div class="controls">
+        <div class="name-box">
+          <label for="username" class="sub">name</label>
+          <input id="username" type="text" placeholder="your name here" aria-label="Your name for the music levels tool">
+        </div>
+        <button class="btn theme-toggle" type="button" data-theme-toggle aria-pressed="true" aria-label="Toggle light and dark theme">dark mode</button>
+        <button class="btn" type="button" id="downloadCsvBtn">export csv</button>
+        <button class="btn btn-primary" type="button" id="printBtn">save / print</button>
+      </div>
+    </div>
+  </header>
 
+  <main class="shell">
+    <p class="print-name" id="printName"></p>
+
+    <section class="intro">
+      <div class="card card-pad">
+        <p>This tool turns your music-level table into something you can read, edit, compare, and now also discuss with a visible chat assistant inside the page.</p>
+        <div class="purpose">
+          <strong>Purpose of this tool:</strong> to help map how deeply music is experienced, give language to different listening states, and make that inner experience easier to explain to yourself and to others.<br><br>
+          <strong>Hybrid mode:</strong> Satan works now with local interpretive logic and is also ready for an external API endpoint later.
+        </div>
+        <div class="legend">
+          <div class="chip"><strong>Level</strong><br>depth of listening</div>
+          <div class="chip"><strong>Intensity</strong><br>how strong the state feels</div>
+          <div class="chip"><strong>After-effect</strong><br>what remains after the listening</div>
+          <div class="chip"><strong>Context</strong><br>date, place, state, album, track</div>
+        </div>
+      </div>
+
+      <div class="card card-pad">
+        <p><strong>How to use it</strong></p>
+        
+        <p class="sub">1. Edit any cell. 2. Use the chat to describe what the music did to you. 3. The Satan (local) suggests vocabulary, body cues, after-effects, and likely levels. 4. Below you can find your Satan helper (powered by OpenAI). 5. Export CSV or print when done.</p>
+      
+	  <p><strong>About Satan chatbot</strong></p>
+	  <p class="sub2">You can use the Satan chatbot as a focused “experience translator”: write what happened to you with the music, and let it suggest language, body cues, and likely levels that you can then copy into the table.  </p>
+      
+	  
+	  
+	  </div>
+    </section>
+
+    <section class="workspace">
+      <div>
+        <div class="table-tools">
+          <div class="table-slider-wrap card">
+            <div class="table-slider-inner">
+              <label for="tableSlider" class="table-meta">table slider</label>
+              <input id="tableSlider" class="table-slider" type="range" min="0" max="100" value="0" aria-label="Scroll table horizontally">
+            </div>
+          </div>
+        </div>
+
+        <section class="table-wrap" aria-label="Panathema music levels table">
+          <table>
+            <thead>
+              <tr>
+                <th scope="col">Level</th>
+                <th scope="col">Name</th>
+                <th scope="col" class="col-meaning">Meaning</th>
+                <th scope="col" class="col-example">Example (I)</th>
+                <th scope="col">Frequency</th>
+                <th scope="col">Intensity</th>
+                <th scope="col" class="col-context">Date / context</th>
+                <th scope="col">Artist</th>
+                <th scope="col">Release / track</th>
+                <th scope="col">After-effect</th>
+                <th scope="col">Genre</th>
+                <th scope="col" class="col-notes">Band / notes</th>
+              </tr>
+            </thead>
+            <tbody id="levelsBody"></tbody>
+          </table>
+        </section>
+      </div>
+
+      <aside class="chat-panel">
+        <section class="card chat-shell" aria-label="Satan chat panel">
+          <div class="chat-head">
+            <div>
+              <p class="status"><span class="status-dot"></span><span id="modeLabel">Satan</span></p>
+              <h2 style="font-family:var(--font-display);font-size:var(--text-lg);line-height:1.1">Satan</h2>
+            </div>
+            <button class="btn" type="button" id="clearChatBtn">clear</button>
+          </div>
+          <p class="chat-meta">Describe what the music did to you, not what genre it was. Satan will turn it into usable language and point you toward one or two possible levels.</p>
+          <div class="quick-actions">
+            <button class="quick-btn" type="button">It felt like pressure in my chest and I could not explain why.</button>
+            <button class="quick-btn" type="button">I saw roads, weather, and old rooms while listening.</button>
+            <button class="quick-btn" type="button">It felt like the music was more me than I was.</button>
+          </div>
+          <div class="chat-log" id="chatLog" aria-live="polite"></div>
+          <form class="chat-form" id="chatForm">
+            <textarea class="chat-input" id="chatInput" placeholder="Example: The track made my throat tighten and I felt exposed, but I still wanted to stay inside it."></textarea>
+            <div class="chat-actions">
+              <button class="btn btn-primary" type="submit">ask Satan</button>
+              <button class="btn" type="button" id="copyReplyBtn">copy last reply</button>
+              <button class="btn" type="button" id="insertReplyBtn">insert into notes cell</button>
+            </div>
+          </form>
+          <div class="config-grid">
+            <div>
+              <label for="apiEndpoint">optional api endpoint</label>
+              <input class="config-input" id="apiEndpoint" type="url" placeholder="https://your-service.onrender.com/chat">
+            </div>
+            <div>
+              <label for="apiModeToggle">response engine</label>
+              <input class="config-input" id="apiModeToggle" type="text" value="auto: local fallback, external if endpoint responds" readonly>
+            </div>
+          </div>
+          <p class="chat-note">If the endpoint is empty or fails, the Satan (local) still works. When the endpoint responds with JSON containing a reply/message/output field, the panel will use it automatically.</p>
+        </section>
+      </aside>
+    </section>
+
+    <div class="footer-note">© panathema · Dated by resonance, not calendar · Location somewhere between the riff and the void</div>
+  </main>
+
+  <script>
+    const rows = [
+      ['L1','Hearing','Music is just sound in the environment.','I notice it is playing, but I stay outside it.','Sometimes','Low','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','No real impact.','Metal','Band, album, track, or notes.'],
+      ['L2','Feeling','I recognise the basic emotion of the music.','I feel sadness, tension, calm, warmth, or aggression.','Often','Low–Medium','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','A slight shift in mood.','Experimental','Band, album, track, or notes.'],
+      ['L3','Describing','I can put the music into words.','I call it dark, bright, slow, heavy, distant, or complex.','Often','Medium','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','More awareness of what I hear.','Other','Band, album, track, or notes.'],
+      ['L4','Embodiment','The music enters the body.','I get chest weight, goosebumps, a tight throat, or a physical pull.','Often','Medium–High','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','The body keeps the trace for a while.','Other','Band, album, track, or notes.'],
+      ['L5','Imagining','The music creates images, scenes, or inner spaces.','I see landscapes, rooms, roads, memories, or abstract shapes.','Often','Medium–High','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','It becomes a private inner film.','Other','Band, album, track, or notes.'],
+      ['L6','Identification','The music feels like part of who I am.','I think: this sounds like my own inner state.','Often','High','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','I feel seen, but also exposed.','Other','Band, album, track, or notes.'],
+      ['L7','Dissolution','The line between me and the music starts to blur.','I stop listening from the outside and feel inside the flow.','Sometimes','Very High','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','Drained, calmer, or emptied out.','Other','Band, album, track, or notes.'],
+      ['L8','Transcendence','The music opens something deeper than ordinary mood.','A passage touches old fear, hope, grief, shame, or meaning.','Rarely','Extreme','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','Shaken, but more honest.','Other','Band, album, track, or notes.'],
+      ['L9','Revelation','The music reveals a truth about me or life.','I suddenly understand something important I could not name before.','Rarely','High–Extreme','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','A hard clarity remains.','Other','Band, album, track, or notes.'],
+      ['L10','Inexpressibility','Words stop feeling adequate.','I know something happened, but language feels too small.','Rarely','Extreme','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','Silence feels safer than explanation.','Other','Band, album, track, or notes.'],
+      ['L11','Mystery','I stop trying to solve the experience.','I let it remain a question without forcing an answer.','Rarely','Medium–High','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','An open question stays with me.','Other','Band, album, track, or notes.'],
+      ['L12','Transformation','The experience changes me over time.','Later I notice my mood, thinking, or self-understanding has shifted.','Very Rarely','High','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','The change feels subtle but real.','Other','Band, album, track, or notes.'],
+      ['L13','Absurdity','The pull of the music goes beyond logic.','I return to something difficult without a clean reason why.','Sometimes','Medium–High','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','I half-laugh, but still return.','Other','Band, album, track, or notes.'],
+      ['L14','Non-being','The ordinary sense of self falls away.','There is no clear me and no clear music, only suspension.','Very Rarely','Extreme','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','Coming back feels strange and distant.','Other','Band, album, track, or notes.'],
+      ['L15','Pre-language','The experience exists beyond thought and explanation.','Nothing in me wants to describe it, only the trace remains.','Very Rarely','Extreme','Date, mood, place, or listening context.','Artist name.','Album, EP, demo, or track.','No story, only an imprint.','Other','Band, album, track, or notes.']
+    ];
+
+    const genres = ['Metal','Traditional Heavy Metal','Speed Metal','Thrash Metal','Crossover Thrash','Black Metal','Atmospheric Black Metal','Raw Black Metal','Symphonic Black Metal','Melodic Black Metal','Pagan Black Metal','Folk Black Metal','Blackgaze / Post-Black Metal','DSBM','War Metal','Death Metal','Old School Death Metal','Melodic Death Metal','Technical Death Metal','Brutal Death Metal','Slam Death Metal','Blackened Death Metal','Death-Doom','Death n Roll','Doom Metal','Epic Doom Metal','Funeral Doom','Stoner Doom','Drone Metal','Sludge Metal','Stoner Metal','Groove Metal','Power Metal','Progressive Metal','Avant-Garde Metal','Experimental Metal','Symphonic Metal','Gothic Metal','Industrial Metal','Industrial Black Metal','Industrial Death Metal','Alternative Metal','Nu Metal','Funk Metal','Rap Metal','Metalcore','Melodic Metalcore','Mathcore','Deathcore','Grindcore','Deathgrind','Goregrind','Pornogrind','Noisegrind','Folk Metal','Viking Metal','Pagan Metal','Celtic Metal','Neoclassical Metal','Djent','Post-Metal','Rock','Classical','Ambient','Electronic','Jazz','Folk','Pop','Experimental','Other','Go and F*** ys'];
+
+    const levelsBody = document.getElementById('levelsBody');
+    rows.forEach((row, i) => {
+      const tr = document.createElement('tr');
+      row.forEach((cell, index) => {
+        const el = index === 0 ? document.createElement('th') : document.createElement('td');
+        if (index === 0) el.setAttribute('scope','row');
+        if (index === 2) el.classList.add('col-meaning');
+        if (index === 3) el.classList.add('col-example');
+        if (index === 6) el.classList.add('col-context');
+        if (index === 11) el.classList.add('col-notes');
+        if (index === 10) {
+          const label = document.createElement('label');
+          label.className = 'sr-only';
+          label.htmlFor = `genre-l${i+1}`;
+          label.textContent = `Genre for level L${i+1}`;
+          const select = document.createElement('select');
+          select.id = `genre-l${i+1}`;
+          select.className = 'genre-select';
+          genres.forEach(g => {
+            const option = document.createElement('option');
+            option.value = g;
+            option.textContent = g;
+            if (g === cell) option.selected = true;
+            select.appendChild(option);
+          });
+          el.appendChild(label);
+          el.appendChild(select);
+        } else {
+          el.textContent = cell;
+          if (index !== 0) el.setAttribute('contenteditable','true');
+        }
+        tr.appendChild(el);
+      });
+      levelsBody.appendChild(tr);
+    });
+
+    document.addEventListener('DOMContentLoaded', function(){
+      const root = document.documentElement;
+      const toggleBtn = document.querySelector('[data-theme-toggle]');
+      const csvBtn = document.getElementById('downloadCsvBtn');
+      const printBtn = document.getElementById('printBtn');
+      const input = document.getElementById('username');
+      const printName = document.getElementById('printName');
+      const chatLog = document.getElementById('chatLog');
+      const chatForm = document.getElementById('chatForm');
+      const chatInput = document.getElementById('chatInput');
+      const apiEndpoint = document.getElementById('apiEndpoint');
+      const modeLabel = document.getElementById('modeLabel');
+      const tableWrap = document.querySelector('.table-wrap');
+      const tableSlider = document.getElementById('tableSlider');
+      let lastReply = '';
+
+      function applyTheme(theme){
+        root.setAttribute('data-theme', theme);
+        const isDark = theme === 'dark';
+        toggleBtn.setAttribute('aria-pressed', String(isDark));
+        toggleBtn.textContent = isDark ? 'dark mode' : 'light mode';
+      }
+      function syncName(){
+        const value = input.value.trim();
+        document.title = value ? `${value} – panathema music levels hybrid tool` : 'panathema music levels hybrid tool';
+        printName.textContent = value ? `${value}'s music levels` : '';
+      }
+      function csvEscape(value){ return `"${String(value ?? '').replace(/"/g, '""')}"`; }
+      function exportCsv(){
+        const tableRows = [];
+        const headers = Array.from(document.querySelectorAll('thead th')).map(th => th.textContent.trim());
+        tableRows.push(headers);
+        document.querySelectorAll('tbody tr').forEach(row => {
+          const data = [];
+          data.push(row.querySelector('th').textContent.trim());
+          row.querySelectorAll('td').forEach(td => {
+            const select = td.querySelector('select');
+            data.push(select ? select.value : td.textContent.trim());
+          });
+          tableRows.push(data);
+        });
+        const csv = tableRows.map(r => r.map(csvEscape).join(',')).join('\n');
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'panathema-music-levels-hybrid.csv';
+        document.body.appendChild(a); a.click(); a.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 300);
+      }
+      function addMessage(role, text, note){
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${role === 'user' ? 'bubble-user' : 'bubble-agent'}`;
+        bubble.innerHTML = `${note ? `<small>${note}</small>` : ''}${text.replace(/\n/g,'<br>')}`;
+        chatLog.appendChild(bubble);
+        chatLog.scrollTop = chatLog.scrollHeight;
+      }
+      function suggestLevels(text){
+        const t = text.toLowerCase();
+        const hits = [];
+        const has = (...words) => words.some(w => t.includes(w));
+        if (has('sound in the background','barely noticed','background only')) hits.push('L1 Hearing');
+        if (has('sad','calm','warm','aggression','angry','tense','emotion')) hits.push('L2 Feeling');
+        if (has('dark','bright','slow','heavy','complex','distant','describe')) hits.push('L3 Describing');
+        if (has('chest','goosebumps','throat','body','physical','shiver','pulse','pressure')) hits.push('L4 Embodiment');
+        if (has('image','images','landscape','road','room','memory','scene','inner film','weather')) hits.push('L5 Imagining');
+        if (has('this is me','felt like me','myself','my inner state','seen','exposed')) hits.push('L6 Identification');
+        if (has('blur','inside the flow','lost myself','dissolve','merged')) hits.push('L7 Dissolution');
+        if (has('fear','hope','grief','shame','meaning','deep')) hits.push('L8 Transcendence');
+        if (has('understood','truth','clarity','realised','revelation')) hits.push('L9 Revelation');
+        if (has('no words','language felt too small','inexpressible','could not explain')) hits.push('L10 Inexpressibility');
+        if (has('question','mystery','did not want to solve')) hits.push('L11 Mystery');
+        if (has('changed me','afterwards i changed','shifted over time','transformed')) hits.push('L12 Transformation');
+        if (has('without reason','absurd','still returned')) hits.push('L13 Absurdity');
+        if (has('no self','suspension','no clear me')) hits.push('L14 Non-being');
+        if (has('beyond thought','pre-language','only the trace remained','imprint')) hits.push('L15 Pre-language');
+        return hits.length ? hits.slice(0,2) : ['L3 Describing','L4 Embodiment'];
+      }
+      function wordBank(text){
+        const t = text.toLowerCase();
+        const emotion = [];
+        const body = [];
+        const after = [];
+        if (/(sad|grief|loss)/.test(t)) emotion.push('sadness','grief');
+        if (/(calm|soft|quiet)/.test(t)) emotion.push('calm','softening');
+        if (/(fear|afraid|panic|terror)/.test(t)) emotion.push('fear');
+        if (/(shame|exposed)/.test(t)) emotion.push('shame','exposure');
+        if (/(warm|tender|gentle)/.test(t)) emotion.push('warmth','tenderness');
+        if (/(angry|anger|aggression|violent)/.test(t)) emotion.push('aggression','tension');
+        if (/(chest|pressure|heavy)/.test(t)) body.push('chest pressure','weight');
+        if (/(throat|voice)/.test(t)) body.push('tight throat');
+        if (/(goosebumps|shiver|skin)/.test(t)) body.push('goosebumps','shiver');
+        if (/(pulse|heart|breath)/.test(t)) body.push('changed pulse','breath shift');
+        if (/(drained|empty)/.test(t)) after.push('drained','emptied out');
+        if (/(clear|clarity|understood)/.test(t)) after.push('hard clarity');
+        if (/(quiet|silence)/.test(t)) after.push('need for silence');
+        if (/(question|uncertain|mystery)/.test(t)) after.push('open question remains');
+        if (/(changed|shifted|different later)/.test(t)) after.push('subtle later change');
+        return {
+          emotion: emotion.length ? [...new Set(emotion)] : ['tension','exposure','absorption'],
+          body: body.length ? [...new Set(body)] : ['somatic pull','internal pressure'],
+          after: after.length ? [...new Set(after)] : ['lingering trace','mood shift']
+        };
+      }
+      function localAgentReply(text){
+        const suggestions = suggestLevels(text);
+        const bank = wordBank(text);
+        const reflection = [];
+        reflection.push('Possible levels: ' + suggestions.join(' or ') + '.');
+        reflection.push('Words you could use: ' + bank.emotion.join(', ') + '.');
+        reflection.push('Body cues: ' + bank.body.join(', ') + '.');
+        reflection.push('After-effect: ' + bank.after.join(', ') + '.');
+        reflection.push('A cleaner sentence: “The music produced ' + bank.body[0] + ' and a sense of ' + bank.emotion[0] + ', leaving ' + bank.after[0] + ' afterwards.”');
+        return reflection.join('\n\n');
+      }
+      async function askExternalAgent(text){
+        const endpoint = apiEndpoint.value.trim();
+        if (!endpoint) return null;
+        try {
+          const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text, input: text, prompt: text, source: 'panathema-hybrid-tool' })
+          });
+          if (!response.ok) throw new Error('Endpoint returned ' + response.status);
+          const data = await response.json();
+          const reply = data.reply || data.message || data.output || data.text || (Array.isArray(data.choices) && data.choices[0] && data.choices[0].message && data.choices[0].message.content);
+          if (!reply) throw new Error('No reply field in JSON');
+          modeLabel.textContent = 'Satan · API connected';
+          return String(reply);
+        } catch (error) {
+          modeLabel.textContent = 'Satan · local fallback';
+          return null;
+        }
+      }
+
+      toggleBtn.addEventListener('click', function(){
+        const current = root.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+        applyTheme(current === 'dark' ? 'light' : 'dark');
+      });
+      csvBtn.addEventListener('click', exportCsv);
+      printBtn.addEventListener('click', () => window.print());
+      input.addEventListener('input', syncName);
+      document.getElementById('clearChatBtn').addEventListener('click', () => {
+        chatLog.innerHTML = '';
+        lastReply = '';
+        addMessage('agent','The chat is cleared. Describe the listening state again and Satan will translate it into emotional, bodily, and level-based language.','agent');
+      });
+      document.querySelectorAll('.quick-btn').forEach(btn => btn.addEventListener('click', () => {
+        chatInput.value = btn.textContent.trim();
+        chatInput.focus();
+      }));
+      document.getElementById('copyReplyBtn').addEventListener('click', async () => {
+        if (!lastReply) return;
+        try { await navigator.clipboard.writeText(lastReply); } catch (e) {}
+      });
+      document.getElementById('insertReplyBtn').addEventListener('click', () => {
+        if (!lastReply) return;
+        const target = document.querySelector('tbody tr td.col-notes') || document.querySelector('tbody tr td:last-child');
+        if (target) target.textContent = lastReply;
+      });
+      function syncTableSlider(){
+        if (!tableWrap || !tableSlider) return;
+        const maxScroll = Math.max(0, tableWrap.scrollWidth - tableWrap.clientWidth);
+        if (!maxScroll) {
+          tableSlider.value = 0;
+          tableSlider.disabled = true;
+          return;
+        }
+        tableSlider.disabled = false;
+        tableSlider.value = String((tableWrap.scrollLeft / maxScroll) * 100);
+      }
+      if (tableSlider && tableWrap) {
+        tableSlider.addEventListener('input', () => {
+          const maxScroll = Math.max(0, tableWrap.scrollWidth - tableWrap.clientWidth);
+          tableWrap.scrollLeft = (Number(tableSlider.value) / 100) * maxScroll;
+        });
+        tableWrap.addEventListener('scroll', syncTableSlider, { passive: true });
+        window.addEventListener('resize', syncTableSlider);
+        setTimeout(syncTableSlider, 60);
+      }
+      chatForm.addEventListener('submit', async function(e){
+        e.preventDefault();
+        const text = chatInput.value.trim();
+        if (!text) return;
+        addMessage('user', text, 'you');
+        chatInput.value = '';
+        addMessage('agent', 'Satan is thinking through the state…', 'agent');
+        const pending = chatLog.lastElementChild;
+        const external = await askExternalAgent(text);
+        const reply = external || localAgentReply(text);
+        pending.innerHTML = `<small>${external ? 'Satan via API' : 'Satan (local)'}</small>${reply.replace(/\n/g,'<br>')}`;
+        lastReply = reply;
+      });
+
+      applyTheme(root.getAttribute('data-theme') || 'dark');
+      syncName();
+      addMessage('agent','Describe a track, passage, or state. Satan will suggest vocabulary, body cues, after-effects, and likely levels from the table.','agent');
+    });
+  </script>
+</body>
+</html>
